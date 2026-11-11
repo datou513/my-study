@@ -1,0 +1,14 @@
+.env
+volumes/
+backup/
+models/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.pdf
+*.epub
+*.mobi
+.DS_Store
+Thumbs.db
