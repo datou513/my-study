@@ -34,7 +34,7 @@ class Source(Base):
     author: Mapped[str | None] = mapped_column(String(200))
 
     object_key: Mapped[str] = mapped_column(String(300))  # MinIO key，内容寻址
-    sha256: Mapped[str] = mapped_column(String(64), index=True)  # 幂等依据：同文件不重复解析
+    sha256: Mapped[str] = mapped_column(String(64), index=True,unique=True)  # 幂等依据：同文件不重复解析
     size_bytes: Mapped[int] = mapped_column("bytes", BigInteger)  # 属性名避开内置 bytes
     lang: Mapped[str | None] = mapped_column(String(8))
     meta_json: Mapped[dict | None] = mapped_column(JSON)  # ISBN / 出版社 / 来源 URL 等不规则字段

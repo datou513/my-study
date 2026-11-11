@@ -110,6 +110,7 @@ services:
       - "8000:8000"
     volumes:
       - ./src:/app/src
+      - ./tests:/app/tests
       # 让容器里也能跑 alembic（migrate 是开发期命令，不在镜像里）
       - ./alembic.ini:/app/alembic.ini
       - ./migrations:/app/migrations

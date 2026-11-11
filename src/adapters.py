@@ -5,6 +5,7 @@ Day 1 只做 ping，够 /ready 用。真正的读写方法随 M0 逐个补。
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 import structlog
@@ -12,7 +13,7 @@ from minio import Minio
 from pymilvus import MilvusClient
 from sqlalchemy import create_engine, text
 
-from .config import Settings
+from .config import Settings, get_settings
 from .ports import StoredObject
 
 log = structlog.get_logger(__name__)
@@ -100,3 +101,17 @@ class MilvusVectorStore:
         except Exception as e:  # noqa: BLE001
             log.warning("milvus.ping_failed", error=str(e))
             return False
+
+
+# --- 进程级单例 ------------------------------------------------------------
+# 这些 client 内部有连接池，每次 new 一个会漏连接。lru_cache 保证只建一次。
+
+
+@lru_cache
+def get_object_store() -> MinioObjectStore:
+    return MinioObjectStore(get_settings())
+
+
+@lru_cache
+def get_vector_store() -> MilvusVectorStore:
+    return MilvusVectorStore(get_settings())
