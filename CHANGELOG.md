@@ -12,3 +12,16 @@
 - `src/ports.py` 五个协议：ObjectStore / MetaStore / VectorStore / LLMProvider / Embedder
 - `src/adapters.py` 三个 ping 实现，`/health` 与 `/ready`
 - 方案文档 `docs/plan.md`
+- 数据模型：`source` / `block` / `note` 三表，`block.text` 建 ngram 全文索引（迁移 `0001`）
+- `sha256` 唯一索引（迁移 `fab1d7318466`），防并发重复入库
+- `src/ingest/store.py`：幂等入库 `store_source`，先存 MinIO 再写库，`IntegrityError` 回查兜底
+- 进程级单例 `get_object_store()` / `get_vector_store()`
+- 测试：`tests/test_store.py`（哈希稳定性、幂等、非法后缀），内容随机 + 用后清理，可重复跑
+
+### Changed
+- `MetaStore` 协议不再使用：MySQL 是自己的库，直接用 SQLAlchemy，不做无意义的抽象
+- MySQL 宿主机端口改为 `3307`（本机已有 MySQL 服务占用 3306）
+- MinIO 镜像改用 `milvusdb/minio`（官方镜像 2025 年停止分发同 tag）
+
+### Docs
+- `docs/progress.md`：进度与交接，换机器/换会话先读它
