@@ -21,7 +21,7 @@ MAX_CHARS = 700
 
 
 @dataclass
-class BlockDraft:
+class BlockDraft:  #切成块的文本
     seq: int
     breadcrumb: str
     heading: str | None

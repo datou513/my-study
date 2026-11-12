@@ -1,8 +1,6 @@
 """保存原始资料，并按文件内容去重（幂等）。"""
 
 import hashlib
-import secrets
-import time
 from pathlib import Path
 
 from sqlalchemy import select
@@ -10,9 +8,8 @@ from sqlalchemy.exc import IntegrityError
 
 from src.adapters import get_object_store
 from src.db import session_scope
+from src.ids import new_id
 from src.models import Source
-
-_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 _FILE_TYPES = {
     ".pdf": ("pdf", "application/pdf"),
@@ -25,12 +22,6 @@ _FILE_TYPES = {
 
 def content_hash(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
-
-
-def _new_source_id() -> str:
-    """ULID：48 位毫秒时间戳 + 80 位随机数，按 Crockford Base32 编码成 26 字符。"""
-    value = ((time.time_ns() // 1_000_000) << 80) | secrets.randbits(80)
-    return "".join(_ALPHABET[(value >> shift) & 31] for shift in range(125, -1, -5))
 
 
 def _detect(path: Path) -> tuple[str, str, str]:
@@ -64,7 +55,7 @@ def store_source(path: Path, title: str | None = None) -> tuple[str, bool]:
     key = f"{digest[:2]}/{digest}{suffix}"
     get_object_store().put(key, data, content_type)  # 事务外：网络 IO
 
-    source_id = _new_source_id()
+    source_id = new_id()
     try:
         with session_scope() as session:  # 短事务：只做 insert
             session.add(

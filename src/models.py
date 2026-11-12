@@ -34,7 +34,7 @@ class Source(Base):
     author: Mapped[str | None] = mapped_column(String(200))
 
     object_key: Mapped[str] = mapped_column(String(300))  # MinIO key，内容寻址
-    sha256: Mapped[str] = mapped_column(String(64), index=True,unique=True)  # 幂等依据：同文件不重复解析
+    sha256: Mapped[str] = mapped_column(String(64), index=True)  # 幂等依据：同文件不重复解析
     size_bytes: Mapped[int] = mapped_column("bytes", BigInteger)  # 属性名避开内置 bytes
     lang: Mapped[str | None] = mapped_column(String(8))
     meta_json: Mapped[dict | None] = mapped_column(JSON)  # ISBN / 出版社 / 来源 URL 等不规则字段
@@ -77,11 +77,14 @@ class Block(Base):
     text: Mapped[str] = mapped_column(Text)
     text_hash: Mapped[str] = mapped_column(String(64))  # 重解析时判断要不要重算向量
     token_count: Mapped[int] = mapped_column(default=0)
+    # 重解析时没被复用 → 打上时间戳；不删除，检索层用 IS NULL 过滤
+    orphaned_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     __table_args__ = (
         Index("idx_block_source", "source_id", "seq"),
         Index("idx_block_hash", "text_hash"),
+        Index("idx_block_orphaned", "orphaned_at"),
         # 中文必须 ngram；ngram_token_size 建索引时生效，改了要重建
         Index("ft_block_text", "text", mysql_prefix="FULLTEXT", mysql_with_parser="ngram"),
     )
